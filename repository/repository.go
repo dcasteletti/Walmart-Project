@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"proyect/config"
 	"proyect/entity"
 	"strings"
@@ -38,22 +38,38 @@ func GetAllProducts() (*entity.Products, error) {
 	return products, nil
 }
 
-func GetProducts(value string) (*entity.Products, error) {
-	if len(value) < 3 {
-		return nil, errors.New("value must be longer than 3")
+func GetProductByID(value string) (*entity.Products, error) {
+	products := &entity.Products{}
+	filter := bson.D{{"id", value}}
+
+	cursor := collection.FindOne(context.Background(), filter)
+	if cursor == nil {
+		return nil, errors.New("")
 	}
 
+	var product *entity.Product
+
+	_ = cursor.Decode(&product)
+
+	products.Product = append(products.Product, product)
+
+	return products, nil
+}
+
+func GetProducts(value string) (*entity.Products, error) {
 	isPalindrome := isPalindrome(value)
 	products := &entity.Products{}
 
+	// regex := fmt.Sprintf("/%s/", value)
+
 	filter := bson.D{
-		{"$or", bson.A{
-			bson.D{{"id", value}},
-			bson.D{{Key: "description", Value: primitive.Regex{Pattern: value}}},
+		{Key: "$or", Value: bson.A{
+			bson.D{{Key: "description", Value: value}},
 			bson.D{{Key: "brand", Value: primitive.Regex{Pattern: value}}},
 		}}}
+	sortedBy := options.Find().SetSort(bson.D{{"id", 1}})
 
-	cursor, err := collection.Find(context.Background(), filter)
+	cursor, err := collection.Find(context.Background(), filter, sortedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +78,6 @@ func GetProducts(value string) (*entity.Products, error) {
 		var product *entity.Product
 
 		if err := cursor.Decode(&product); err != nil {
-			fmt.Println(err)
 			continue
 		}
 

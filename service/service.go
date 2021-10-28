@@ -1,13 +1,12 @@
 package service
 
 import (
-	"fmt"
 	"proyect/entity"
-	repo "proyect/repository"
+	"proyect/repository"
 )
 
 func GetAllProducts() (*entity.Products, error) {
-	response, err := repo.GetAllProducts()
+	response, err := repository.GetAllProducts()
 	if err != nil {
 		return nil, err
 	}
@@ -15,22 +14,19 @@ func GetAllProducts() (*entity.Products, error) {
 	return response, nil
 }
 
-func GetProducts(value string) (*entity.Products, error) {
-	response, err := repo.GetProducts(value)
+func GetProducts(value string, isID bool) (*entity.Products, error) {
+	var err error
+	products := &entity.Products{}
+
+	if isID {
+		products, err = repository.GetProductByID(value)
+	} else {
+		products, err = repository.GetProducts(value)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	for _, r := range response.Product {
-		fmt.Println(r.Id)
-		fmt.Println(r.Brand)
-		fmt.Println(r.Description)
-		fmt.Println(r.Image)
-		fmt.Println(r.Price)
-		fmt.Println(".-...")
-	}
-
-	fmt.Println()
-
-	return response, nil
+	return products, nil
 }
