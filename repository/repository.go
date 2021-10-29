@@ -2,22 +2,37 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"proyect/config"
 	"proyect/entity"
+	"strconv"
 	"strings"
 )
 
 type Repository struct {
 }
 
-var collection = config.GetCollection("products")
 var ctx = context.Background()
 
+func GetCollection() (*mongo.Collection, error) {
+	collection, err := config.GetCollection("products")
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to database:%s", err)
+	}
+
+	return collection, err
+}
+
 func GetAllProducts() (*entity.Products, error) {
+	collection, err := GetCollection()
+	if err != nil {
+		return nil, err
+	}
+
 	products := &entity.Products{}
 
 	request, err := collection.Find(ctx, bson.D{})
@@ -29,7 +44,7 @@ func GetAllProducts() (*entity.Products, error) {
 		product := &entity.Product{}
 		err = request.Decode(product)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		products.Product = append(products.Product, product)
@@ -38,40 +53,48 @@ func GetAllProducts() (*entity.Products, error) {
 	return products, nil
 }
 
-func GetProductByID(value string) (*entity.Products, error) {
-	products := &entity.Products{}
-	filter := bson.D{{"id", value}}
-
-	cursor := collection.FindOne(context.Background(), filter)
-	if cursor == nil {
-		return nil, errors.New("")
+func GetProductByID(id string) (*entity.Products, error) {
+	collection, err := GetCollection()
+	if err != nil {
+		return nil, err
 	}
 
-	var product *entity.Product
+	idInt, err := strconv.Atoi(id)
+	products := &entity.Products{}
+	filter := bson.D{{Key: "id", Value: idInt}}
 
-	_ = cursor.Decode(&product)
+	cursor, err := collection.Find(context.TODO(), filter, options.Find().SetLimit(1))
+	for cursor.Next(ctx) {
+		var product *entity.Product
 
-	products.Product = append(products.Product, product)
+		if err := cursor.Decode(&product); err != nil {
+			continue
+		}
+
+		products.Product = append(products.Product, product)
+	}
 
 	return products, nil
 }
 
 func GetProducts(value string) (*entity.Products, error) {
-	isPalindrome := isPalindrome(value)
-	products := &entity.Products{}
+	collection, err := GetCollection()
+	if err != nil {
+		return nil, err
+	}
 
-	// regex := fmt.Sprintf("/%s/", value)
+	products := &entity.Products{}
 
 	filter := bson.D{
 		{Key: "$or", Value: bson.A{
-			bson.D{{Key: "description", Value: value}},
+			bson.D{{Key: "description", Value: primitive.Regex{Pattern: value}}},
 			bson.D{{Key: "brand", Value: primitive.Regex{Pattern: value}}},
 		}}}
 	sortedBy := options.Find().SetSort(bson.D{{"id", 1}})
 
 	cursor, err := collection.Find(context.Background(), filter, sortedBy)
-	if err != nil {
-		return nil, err
+	if err != nil || cursor == nil {
+		return nil, fmt.Errorf("error in query %s", err)
 	}
 
 	for cursor.Next(ctx) {
@@ -81,8 +104,8 @@ func GetProducts(value string) (*entity.Products, error) {
 			continue
 		}
 
-		if isPalindrome {
-			halfPercentDiscount(product)
+		if IsPalindrome(value) {
+			product.Price = HalfPercentDiscount(product.Price)
 		}
 
 		products.Product = append(products.Product, product)
@@ -91,7 +114,7 @@ func GetProducts(value string) (*entity.Products, error) {
 	return products, nil
 }
 
-func isPalindrome(word string) bool {
+func IsPalindrome(word string) bool {
 	word = strings.ToUpper(word)
 
 	for i, letter := range word {
@@ -105,6 +128,6 @@ func isPalindrome(word string) bool {
 	return true
 }
 
-func halfPercentDiscount(product *entity.Product) {
-	product.Price = product.Price / 2
+func HalfPercentDiscount(price int) int {
+	return price / 2
 }

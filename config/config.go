@@ -14,19 +14,19 @@ var (
 	database = "local"
 )
 
-func GetCollection(collection string) *mongo.Collection {
+func GetCollection(collection string) (*mongo.Collection, error) {
 	url := fmt.Sprintf("mongodb://%s:%d", host, port)
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	context, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(context)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return client.Database(database).Collection(collection)
+	return client.Database(database).Collection(collection), nil
 }

@@ -22,15 +22,14 @@ func GetAllProducts(w http.ResponseWriter, r *http.Request) {
 func GetProducts(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	isID := searchByID(id)
-	 response := server.NewResponse(w)
+	response := server.NewResponse(w)
 
-	/*
 	if !validateParams(id) && !isID {
+		response.Error(http.StatusBadRequest, "Invalid params")
 		return
 	}
 
-	 */
-	
+
 	products, err := service.GetProducts(id, isID)
 	if err != nil {
 		response.Error(http.StatusBadRequest, "ERROR")
@@ -38,8 +37,8 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if products == nil || len(products.Product) < 1 {
-		response.Error(http.StatusNotFound, "ERROR")
+	if products == nil || len(products.Product) == 0 {
+		response.Error(http.StatusNotFound, "ERROR NOT FOUND")
 
 		return
 	}
@@ -57,7 +56,7 @@ func searchByID(value string) bool {
 }
 
 func validateParams(id string) bool {
-	if len(id) > 3 {
+	if len(id) >= 3 {
 		return true
 	}
 
