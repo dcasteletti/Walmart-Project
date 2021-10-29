@@ -2,7 +2,11 @@ module proyect
 
 go 1.17
 
-require go.mongodb.org/mongo-driver v1.7.3
+require (
+	github.com/gorilla/mux v1.8.0
+	github.com/urfave/negroni v1.0.0
+	go.mongodb.org/mongo-driver v1.7.3
+)
 
 require (
 	github.com/go-stack/stack v1.8.0 // indirect
@@ -16,5 +20,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/text v0.3.5 // indirect
-	gopkg.in/oleiade/reflections.v1 v1.0.0 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
