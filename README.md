@@ -19,6 +19,7 @@ As you can see, this project was developed with `golang`; hence, before getting 
 ### MongoDb useful commands
 + `mongo` info 
 + `pkill mongod` kill the connection
++ `brew services stop mongodb-community@5.0` stop the connection
 
 
 ### Lift the service

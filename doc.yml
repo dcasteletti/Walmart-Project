@@ -30,29 +30,77 @@ paths:
             $ref: '#/components/schemas/Product'
         "400":
           description: "invalid response"
+          schema:
+            $ref: '#/components/schemas/BadRequest'
         "404":
           description: "invalid response"
+          schema:
+            $ref: '#/components/schemas/NotFound'
 components:
   schemas:
     Product:
-      type: array
-      items:
-        type: object
-        properties:
-          id:
-            type: integer
-            format: int64
-            example: 1
-          brand:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
             type: string
-            example: Walmart
-          description:
-            type: string
-            example: TV
-          image:
-            type: string
-            example: www.walmart.cl/image/1
-          price:
-            type: integer
-            format: int64
-            example: 1
+          example: []
+        success:
+          type: boolean
+          example: true
+        state:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+                example: 1
+              brand:
+                type: string
+                example: Walmart
+              description:
+                type: string
+                example: TV
+              image:
+                type: string
+                example: www.walmart.cl/image/1
+              price:
+                type: integer
+                format: int64
+                example: 1
+    NotFound:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: integer
+                default: 404
+              message:
+                type: string
+                example: Resource not found.
+    BadRequest:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: integer
+                default: 400
+                enum:
+                  - 400
+                  - 401
+                  - 404
+                  - 500
+              message:
+                type: string
+                example: is invalid
